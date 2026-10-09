@@ -10,9 +10,7 @@
   "kv_namespaces": [
     {
       "binding": "REVIEW_KV",
-      // 部署前请先运行：npx wrangler kv namespace create REVIEW_KV
-      // 然后把命令输出中的 id 粘贴到下方，替换占位值
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      "id": "cd5c6cb512f14b26acea0e2e2498ed7a"
     }
   ]
 }
