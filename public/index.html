@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171715">
+  <meta name="description" content="写下每日复盘，在时空隧道中回望每一天。">
+  <title>每日复盘 · 时空隧道</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#homePage" aria-label="每日复盘，返回复盘首页">
+        <span class="brand-mark" aria-hidden="true">○</span><span class="brand-name">每日复盘</span>
+      </a>
+      <span class="top-date" id="todayTop"></span>
+    </header>
+    <main id="main" tabindex="-1">
+      <section class="page home-page" id="homePage" aria-labelledby="homeHeading">
+        <div class="intro">
+          <div class="intro-copy">
+            <p class="eyebrow">写下今天</p>
+            <h1 id="homeHeading">把今天，轻轻写下。</h1>
+            <p class="intro-line">不必完整，只记下此刻值得留住的事。</p>
+          </div>
+          <div class="ring-count" aria-live="polite"><span class="ring-count-mark" aria-hidden="true">○</span><span>已留下 <strong id="ringCount">0</strong> 张总结卡</span></div>
+        </div>
+
+        <div class="journal-toolbar">
+          <div class="view-switch" role="group" aria-label="浏览模式">
+            <button class="view-tab active" id="todayTab" type="button" aria-pressed="true">今日</button>
+            <button class="view-tab" id="browseTab" type="button" aria-pressed="false">翻页</button>
+          </div>
+          <span class="local-note" id="localNote"><span class="local-dot" aria-hidden="true"></span><span id="localNoteText">未连接云端 · 本机保存</span></span>
+        </div>
+        <div class="week-navigation" aria-label="选择记录日期">
+          <button class="week-arrow" id="prevWeek" type="button" aria-label="查看上一周">‹</button>
+          <div class="week-strip" id="weekStrip" aria-label="本周日期"></div>
+          <button class="week-arrow" id="nextWeek" type="button" aria-label="查看下一周">›</button>
+        </div>
+
+        <div class="home-layout">
+          <div class="home-writing">
+            <form class="paper-sheet" id="reviewForm">
+              <div class="paper-inner">
+                <div class="paper-heading">
+                  <p class="paper-kicker">每日复盘</p>
+                  <h2 id="selectedDateHeading"></h2>
+                  <p class="paper-weekday" id="selectedWeekday"></p>
+                </div>
+                <input id="entryDate" name="date" type="date" aria-label="复盘日期" class="visually-hidden-date">
+
+                <fieldset class="mood-field">
+                  <legend class="field-label">今日心绪 <span class="optional">选填 · 可留空</span></legend>
+                  <div class="mood-options" id="moodOptions">
+                    <button type="button" class="mood-pill" data-mood="平静" aria-pressed="false">平静</button>
+                    <button type="button" class="mood-pill" data-mood="澄明" aria-pressed="false">澄明</button>
+                    <button type="button" class="mood-pill" data-mood="感恩" aria-pressed="false">感恩</button>
+                    <button type="button" class="mood-pill" data-mood="锐意" aria-pressed="false">锐意</button>
+                    <button type="button" class="mood-pill" data-mood="承重" aria-pressed="false">承重</button>
+                    <button type="button" class="mood-pill" data-mood="柔软" aria-pressed="false">柔软</button>
+                  </div>
+                </fieldset>
+
+                <div class="field-block one-line-block">
+                  <label class="field-label" for="oneLine"><span>今日一句话</span><span class="optional">可留空，由原文节选</span></label>
+                  <textarea id="oneLine" name="oneLine" maxlength="360" rows="2" placeholder="用一句话，记下今天长成的样子"></textarea>
+                </div>
+
+                <div class="field-block writing-block">
+                  <label class="field-label" for="entry"><span>今日所思</span><span class="optional">这一环的印记</span></label>
+                  <textarea id="entry" name="entry" maxlength="12000" placeholder="发生了什么，看见了什么，想对自己说什么……" required></textarea>
+                </div>
+
+                <div class="field-block tomorrow-block">
+                  <label class="field-label" for="tomorrow"><span>明日所向</span><span class="optional">可选</span></label>
+                  <input id="tomorrow" name="tomorrow" maxlength="240" placeholder="明天想把哪一步走得更稳？">
+                </div>
+
+                <div class="title-field">
+                  <label class="field-label" for="cardTitle"><span>给这一天一个名字</span><span class="optional">可选</span></label>
+                  <input id="cardTitle" name="title" maxlength="60" placeholder="例如：在忙碌里慢下来">
+                </div>
+
+                <div class="save-block">
+                  <p class="card-prompt">保存后，会留下一张属于这一天的纪念卡。</p>
+                  <button class="primary" id="saveButton" type="submit"><span>保存复盘</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="4.8" stroke="currentColor" stroke-width="1"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg></button>
+                  <div class="save-feedback" aria-live="polite">
+                    <p class="save-state" id="saveState" role="status">写下今天，保存后会同步到云端。</p>
+                    <p class="generation-state" id="generationState" hidden></p>
+                  </div>
+                </div>
+              </div>
+            </form>
+
+            <section class="memory-section" aria-labelledby="memoryHeading">
+              <div class="memory-section-head"><p class="eyebrow">A MOMENT TO KEEP</p><h2 id="memoryHeading">纪念卡片预览</h2></div>
+              <p class="preview-empty" id="previewEmpty">保存这一日后，这里会留下属于这一天的纸页。</p>
+              <article class="memory-card" id="memoryCard" hidden aria-live="polite">
+                <div class="memory-card-inner">
+                  <div class="memory-topline"><span id="cardRing"></span><span class="memory-mood" id="previewMood"></span></div>
+                  <h3 id="previewDate"></h3>
+                  <p class="memory-weekday" id="previewWeekday"></p>
+                  <div class="ring-seal" aria-hidden="true"><span></span></div>
+                  <h4 id="previewTitle"></h4>
+                  <p class="memory-summary" id="previewSummary"></p>
+                  <p class="memory-tomorrow" id="previewTomorrow" hidden></p>
+                  <div class="memory-footer"><span class="seal-word">每日<br>复盘</span><span class="memory-mark">留给时间，也留给自己</span></div>
+                </div>
+              </article>
+              <p class="preview-caption" id="previewCaption" hidden></p>
+            </section>
+          </div>
+
+          <aside class="home-rail" aria-label="本地记录说明与历史卡片">
+            <div class="rail-note"><span class="rail-mark" aria-hidden="true">○</span><p>不必写得完整，<br>也不必写得漂亮。<br>诚实记下一点，就很好。</p></div>
+            <p class="privacy-note"><span class="lock-mark" aria-hidden="true">⌑</span><span>记录会保存到你自己的 Cloudflare 云端，本机留有副本；换设备时输入同一访问令牌即可继续，清除浏览器数据不会丢失云端记录。未填写的一句话会按本地演示规则整理，不调用 AI 服务。</span></p>
+            <div class="sync-panel" id="syncPanel" hidden>
+              <label class="field-label" for="syncToken"><span>云端访问令牌</span></label>
+              <input id="syncToken" class="sync-input" type="password" maxlength="120" autocomplete="off" placeholder="输入部署时设置的 REVIEW_TOKEN">
+              <button class="primary sync-connect" id="syncConnect" type="button"><span>连接云端</span></button>
+              <p class="sync-status" id="syncStatus" aria-live="polite"></p>
+            </div>
+            <button class="change-token" id="changeToken" type="button" hidden>更换访问令牌</button>
+            <article class="home-card" id="homeCard" hidden aria-live="polite"><div class="home-card-meta" id="homeCardMeta"></div><h3 id="homeCardTitle"></h3><p id="homeCardSummary"></p><button id="openHomeCard" type="button">打开并编辑总结卡 →</button></article>
+            <button class="count-card" type="button" id="countCard" aria-label="打开时空隧道，查看所有历史总结">
+              <span><span class="count-label">已经留下的回响</span><strong class="count-value" id="homeCount">0 张总结卡片</strong></span><span class="count-icon" aria-hidden="true">↗</span>
+            </button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page tunnel-page" id="tunnelPage" aria-labelledby="tunnelHeading" hidden>
+        <div class="page-title"><p class="eyebrow">回望每一天</p><h1 id="tunnelHeading">时空隧道</h1><p>沿着时间，回看写下的每一天。</p></div>
+        <div class="timeline-tools" role="search">
+          <label class="sr-only" for="searchCards">搜索总结卡</label>
+          <input id="searchCards" type="search" placeholder="搜索标题、记录或总结" aria-label="搜索标题、记录或总结">
+          <div class="date-filter-control">
+            <input id="dateFilter" type="text" inputmode="numeric" autocomplete="off" placeholder="选择日期" aria-label="按日期筛选" aria-describedby="dateFilterHelp">
+            <button id="datePickerButton" class="date-picker-button" type="button" aria-label="打开日期选择器" aria-controls="datePicker">选择</button>
+            <input id="datePicker" class="date-picker-native" type="date" lang="zh-CN" tabindex="-1" aria-label="选择筛选日期" aria-describedby="dateFilterHelp">
+          </div>
+          <span id="dateFilterHelp" class="sr-only">可输入“2026-10-05”或“2026年10月5日”，也可使用选择日期按钮打开日历。</span>
+          <button id="clearFilters" class="filter-clear" type="button">清除搜索和日期</button>
+        </div>
+        <button class="review-all" id="reviewAll" type="button"><span>从最近的一张开始，回顾全部</span><span aria-hidden="true">→</span></button>
+        <div id="timeline" class="timeline-list" aria-label="按日期倒序排列的每日总结"></div>
+        <div id="emptyTunnel" class="empty-state" hidden><span class="empty-ring" aria-hidden="true">○</span><h2>隧道还安安静静</h2><p>这里会收录你的每日总结。完成第一次复盘后，卡片就会出现在这里。</p><button class="secondary" id="startFirst" type="button">回到今日复盘</button></div>
+        <p class="all-note" id="allNote">总结卡片会同步到你的云端存储；未手写总结时使用本地演示规则生成，不调用 AI 服务。</p>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav-wrap" aria-label="主导航"><div class="bottom-nav">
+    <button class="nav-button" id="navHome" type="button" aria-current="page"><span aria-hidden="true">◌</span>复盘</button>
+    <button class="nav-button" id="navTunnel" type="button" aria-current="false"><span aria-hidden="true">⌁</span>时空隧道<span class="nav-badge" id="navCount">0</span></button>
+  </div></nav>
+
+  <div class="modal-backdrop" id="modalBackdrop" role="presentation" aria-hidden="true">
+    <section class="detail-sheet" id="detailSheet" role="dialog" aria-modal="true" aria-labelledby="detailTitle" tabindex="-1">
+      <div class="sheet-head"><div><p class="sheet-ring" id="detailRing"></p><p class="sheet-date" id="detailDate"></p><h2 class="sheet-title" id="detailTitle">今日回响</h2></div><button class="icon-button" id="closeDetail" type="button" aria-label="关闭卡片详情">×</button></div>
+      <div class="detail-mood" id="detailMood" hidden></div>
+      <div id="detailReading"><div class="detail-summary" id="detailSummary"></div><p class="detail-label">复盘记录</p><p class="detail-original" id="detailOriginal"></p><p class="detail-tomorrow" id="detailTomorrow" hidden></p><p class="detail-foot" id="detailFoot">这张卡片保存在云端，本机留有副本。</p></div>
+      <div class="detail-actions" id="detailActions"><button id="editRecordButton" class="text-action" type="button">编辑这天的记录</button><button id="editCardButton" class="edit-card-button" type="button">编辑总结卡</button></div>
+      <div id="cardEdit" class="card-edit" hidden><label class="field-label" for="editCardTitle">卡片标题</label><input id="editCardTitle" class="field-input" maxlength="60"><label class="field-label edit-summary-label" for="editCardSummary">总结内容</label><textarea id="editCardSummary" maxlength="2000"></textarea><div class="edit-actions"><button id="cancelCardEdit" class="secondary" type="button">取消</button><button id="saveCardEdit" class="primary" type="button">保存修改</button></div></div>
+      <div class="reader-progress" id="readerProgress" hidden></div><div class="reader-controls" id="readerControls" hidden><button class="secondary" id="readerPrev" type="button">← 上一条</button><button class="secondary" id="readerNext" type="button">下一条 →</button></div><button class="reader-exit" id="readerExit" type="button" hidden>退出连续回顾</button>
+    </section>
+  </div>
+  <script>
+    (() => {
+      const STORAGE_KEY = 'daily-review-cards-v1';
+      const TOKEN_KEY = 'daily-review-token-v1';
+      const $ = (id) => document.getElementById(id);
+      const entry = $('entry');
+      const oneLine = $('oneLine');
+      const tomorrow = $('tomorrow');
+      const entryDate = $('entryDate');
+      const cardTitle = $('cardTitle');
+      const form = $('reviewForm');
+      const saveState = $('saveState');
+      const saveButton = $('saveButton');
+      const homePage = $('homePage');
+      const tunnelPage = $('tunnelPage');
+      const timeline = $('timeline');
+      const emptyTunnel = $('emptyTunnel');
+      const backdrop = $('modalBackdrop');
+      const detailSheet = $('detailSheet');
+      const moodButtons = [...document.querySelectorAll('.mood-pill')];
+      let reviews = [];
+      let selectedMood = '';
+      let loadedDateKey = '';
+      let weekOffset = 0;
+      let readerMode = false;
+      let readerItems = [];
+      let readerIndex = 0;
+      let lastFocused = null;
+      let activeReview = null;
+
+      const localDateKey = (date = new Date()) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+      const dateObject = (key) => { const [y,m,d] = key.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+      const fullDate = (key) => new Intl.DateTimeFormat('zh-CN', {year:'numeric', month:'long', day:'numeric', weekday:'long'}).format(dateObject(key));
+      const dateOnly = (key) => new Intl.DateTimeFormat('zh-CN', {year:'numeric', month:'long', day:'numeric'}).format(dateObject(key));
+      const weekday = (key) => new Intl.DateTimeFormat('zh-CN', {weekday:'long'}).format(dateObject(key));
+      const monthDate = (key) => new Intl.DateTimeFormat('zh-CN', {year:'numeric', month:'long'}).format(dateObject(key));
+      const parseDateFilter = (value) => {
+        const match = trimText(value).match(/^(\d{4})(?:[-/.年])(\d{1,2})(?:[-/.月])(\d{1,2})日?$/);
+        if (!match) return '';
+        const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+        const parsed = new Date(year, month - 1, day, 12);
+        return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day ? localDateKey(parsed) : '';
+      };
+      const trimText = (text) => (text || '').trim();
+      const excerpt = (text, limit = 140) => {
+        const clean = trimText(text).replace(/\s+/g, ' ');
+        if (clean.length <= limit) return clean;
+        const first = clean.slice(0, limit);
+        const punctuation = Math.max(first.lastIndexOf('。'), first.lastIndexOf('！'), first.lastIndexOf('？'), first.lastIndexOf('；'));
+        return `${first.slice(0, punctuation > 50 ? punctuation + 1 : limit).trim()}…`;
+      };
+      const cardSummary = (review) => trimText(review.summary) || excerpt(review.original);
+      const demoSummary = (text) => {
+        const clean = trimText(text).replace(/\s+/g, ' ');
+        const moment = clean.length > 72 ? `${clean.slice(0, 72)}…` : clean;
+        return `今天值得记住的，是「${moment}」这段经历。\n\n愿你记得，认真走过的每一步都算数，也把这份体会轻轻带到明天。`;
+      };
+      const sortedReviews = () => [...reviews].sort((a,b) => b.date.localeCompare(a.date));
+      const parseJson = (text) => { try { return JSON.parse(text || '[]'); } catch { return []; } };
+      const normalizeReviews = (value) => Array.isArray(value) ? value.filter((item) => item && /^\d{4}-\d\d-\d\d$/.test(item.date) && typeof item.original === 'string') : [];
+      function readStorage() { return normalizeReviews(parseJson(localStorage.getItem(STORAGE_KEY))); }
+      function ringNumber(item) {
+        if (Number.isInteger(item.ring) && item.ring > 0) return item.ring;
+        return [...reviews].sort((a,b) => a.date.localeCompare(b.date)).findIndex((review) => review.date === item.date) + 1;
+      }
+      function setMood(value) {
+        selectedMood = value || '';
+        moodButtons.forEach((button) => {
+          const active = button.dataset.mood === selectedMood;
+          button.classList.toggle('selected', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+      }
+      function hasUnsavedChanges() {
+        if (!loadedDateKey) return false;
+        const existing = reviews.find((item) => item.date === loadedDateKey);
+        const defaultTitle = existing?.title || '今日回响';
+        const expected = {title:defaultTitle, original:existing?.original || '', summary:existing?.summaryMode === 'demo' ? '' : (existing?.summary || ''), mood:existing?.mood || '', tomorrow:existing?.tomorrow || ''};
+        const current = {title:trimText(cardTitle.value) || defaultTitle, original:entry.value, summary:oneLine.value, mood:selectedMood, tomorrow:tomorrow.value};
+        return JSON.stringify(current) !== JSON.stringify(expected);
+      }
+      function navigateToDate(target) {
+        const selected = target || localDateKey();
+        if (selected === loadedDateKey) { entryDate.value = selected; renderWeek(); return true; }
+        if (hasUnsavedChanges() && !window.confirm('这一天的修改尚未保存。放弃修改并切换日期吗？')) {
+          entryDate.value = loadedDateKey;
+          renderWeek();
+          return false;
+        }
+        weekOffset = 0;
+        entryDate.value = selected;
+        populateDate();
+        return true;
+      }
+      function showState(message, kind = '') { saveState.textContent = message; saveState.dataset.kind = kind; }
+      function updateCount() {
+        const count = reviews.length;
+        $('ringCount').textContent = String(count);
+        $('homeCount').textContent = `${count} 张纪念卡`;
+        $('navCount').textContent = String(count);
+        $('reviewAll').disabled = count === 0;
+        $('reviewAll').setAttribute('aria-label', count ? `从最近一张开始回顾全部 ${count} 张卡片` : '目前没有可回顾的卡片');
+        renderWeek();
+      }
+      function renderWeek() {
+        const strip = $('weekStrip');
+        strip.replaceChildren();
+        const selected = dateObject(entryDate.value || localDateKey());
+        const mondayOffset = (selected.getDay() + 6) % 7;
+        const monday = new Date(selected);
+        monday.setDate(selected.getDate() - mondayOffset + weekOffset);
+        const labels = ['一','二','三','四','五','六','日'];
+        for (let i = 0; i < 7; i += 1) {
+          const day = new Date(monday);
+          day.setDate(monday.getDate() + i);
+          const key = localDateKey(day);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `day-button${key === entryDate.value ? ' selected' : ''}${reviews.some((item) => item.date === key) ? ' has-entry' : ''}`;
+          button.setAttribute('aria-label', `${fullDate(key)}${reviews.some((item) => item.date === key) ? '，已有记录' : ''}`);
+          button.setAttribute('aria-pressed', String(key === entryDate.value));
+          button.innerHTML = `<span class="day-name">${labels[i]}</span><span class="day-number">${day.getDate()}</span><span class="day-dot" aria-hidden="true"></span>`;
+          button.addEventListener('click', () => navigateToDate(key));
+          strip.append(button);
+        }
+      }
+      function renderTimeline() {
+        timeline.replaceChildren();
+        const query = trimText($('searchCards').value).toLowerCase();
+        const dateQuery = $('dateFilter').dataset.dateKey || '';
+        const items = sortedReviews().filter((item) => {
+          const searchable = `${item.title || ''} ${item.summary || ''} ${item.original || ''} ${item.mood || ''} ${item.tomorrow || ''}`.toLowerCase();
+          return (!query || searchable.includes(query)) && (!dateQuery || item.date === dateQuery);
+        });
+        emptyTunnel.hidden = items.length !== 0;
+        $('reviewAll').hidden = items.length === 0;
+        $('allNote').hidden = items.length === 0;
+        if (!items.length && reviews.length) {
+          $('emptyTunnel').querySelector('h2').textContent = '没有找到匹配的卡片';
+          $('emptyTunnel').querySelector('p').textContent = '试试更短的关键词，或清除日期筛选，看看其他日子的回响。';
+        } else {
+          $('emptyTunnel').querySelector('h2').textContent = '隧道还安安静静';
+          $('emptyTunnel').querySelector('p').textContent = '这里会收录你的每日总结。完成第一次复盘后，卡片就会出现在这里。';
+        }
+        for (const item of items) {
+          const month = monthDate(item.date);
+          if (timeline.lastElementChild?.dataset.month !== month) {
+            const label = document.createElement('h2');
+            label.className = 'month-label'; label.dataset.month = month; label.textContent = month; timeline.append(label);
+          }
+          const card = document.createElement('article');
+          card.className = 'timeline-card'; card.tabIndex = 0; card.setAttribute('role', 'button');
+          card.setAttribute('aria-label', `${fullDate(item.date)}，${cardSummary(item)}`);
+          const dateRow = document.createElement('div'); dateRow.className = 'card-date';
+          const date = document.createElement('strong'); date.textContent = `第 ${String(ringNumber(item)).padStart(3, '0')} 环 · ${fullDate(item.date)}`;
+          const mood = document.createElement('span'); mood.className = 'timeline-mood'; mood.textContent = item.mood || '一日一环'; dateRow.append(date, mood);
+          const title = document.createElement('h3'); title.className = 'card-title'; title.textContent = item.title || '今日回响';
+          const summary = document.createElement('p'); summary.className = 'card-summary'; summary.textContent = cardSummary(item);
+          const source = document.createElement('p'); source.className = 'card-source';
+          source.textContent = item.summaryMode === 'demo' ? '本地演示规则 · 非 AI 服务' : item.summaryMode === 'edited' ? '已编辑的总结卡' : trimText(item.summary) ? '手写总结' : '复盘原文节选';
+          card.append(dateRow, title, summary, source);
+          card.addEventListener('click', () => openDetail(item));
+          card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openDetail(item); } });
+          timeline.append(card);
+        }
+      }
+      function updateHomeCard(item) {
+        $('homeCard').hidden = !item;
+        $('previewEmpty').hidden = Boolean(item);
+        $('memoryCard').hidden = !item;
+        $('previewCaption').hidden = !item;
+        if (!item) { $('generationState').hidden = true; return; }
+        const demo = item.summaryMode === 'demo';
+        $('homeCardMeta').textContent = `${fullDate(item.date)} · ${demo ? '本地演示规则 · 非 AI 服务' : item.summaryMode === 'edited' ? '已编辑总结' : '手写总结'}`;
+        $('homeCardTitle').textContent = item.title || '今日回响';
+        $('homeCardSummary').textContent = cardSummary(item);
+        $('cardRing').textContent = `第 ${String(ringNumber(item)).padStart(3, '0')} 环`;
+        $('previewMood').textContent = item.mood || '今日心绪';
+        $('previewDate').textContent = dateOnly(item.date);
+        $('previewWeekday').textContent = weekday(item.date);
+        $('previewTitle').textContent = item.title || (item.summaryMode === 'demo' ? '这一环的印记，尚未落笔' : '今日回响');
+        $('previewSummary').textContent = cardSummary(item);
+        $('previewTomorrow').textContent = item.tomorrow ? `明日所向　${item.tomorrow}` : '';
+        $('previewTomorrow').hidden = !item.tomorrow;
+        $('previewCaption').textContent = demo ? '总结内容由本地演示规则生成，不调用 AI 或云端服务。' : '一页留存，供未来的你翻阅。';
+        $('generationState').textContent = demo ? '纪念卡已生成 · 本地演示规则（非 AI）' : '纪念卡已生成 · 总结来自你的文字';
+        $('generationState').hidden = false;
+      }
+      function populateDate() {
+        const selected = entryDate.value || localDateKey();
+        const existing = reviews.find((item) => item.date === selected);
+        $('selectedDateHeading').textContent = dateOnly(selected);
+        $('selectedWeekday').textContent = weekday(selected);
+        entry.value = existing?.original || '';
+        oneLine.value = existing?.summaryMode === 'demo' ? '' : (existing?.summary || '');
+        tomorrow.value = existing?.tomorrow || '';
+        cardTitle.value = existing?.title || '';
+        setMood(existing?.mood || '');
+        loadedDateKey = selected;
+        if (existing) showState(`${selected === localDateKey() ? '今天' : fullDate(selected)}已有记录 · 保存将更新这一环`, 'ok');
+        else showState('这一天还没有记录，写下便保存。');
+        updateHomeCard(existing);
+        renderWeek();
+      }
+      function setPage(name) {
+        const isHome = name === 'home';
+        homePage.hidden = !isHome; tunnelPage.hidden = isHome;
+        $('navHome').setAttribute('aria-current', isHome ? 'page' : 'false');
+        $('navTunnel').setAttribute('aria-current', isHome ? 'false' : 'page');
+        $('todayTab').classList.toggle('active', isHome);
+        $('todayTab').setAttribute('aria-pressed', String(isHome));
+        $('browseTab').classList.toggle('active', !isHome);
+        $('browseTab').setAttribute('aria-pressed', String(!isHome));
+        if (!isHome) renderTimeline();
+        $('main').focus({preventScroll:true}); window.scrollTo({top:0, behavior:'smooth'});
+      }
+      function openDetail(item, options = {}) {
+        lastFocused = document.activeElement; readerMode = Boolean(options.reader); readerItems = options.items || []; readerIndex = options.index || 0;
+        renderDetail(item); backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; detailSheet.focus();
+      }
+      function renderDetail(item) {
+        activeReview = item;
+        $('detailRing').textContent = `第 ${String(ringNumber(item)).padStart(3, '0')} 环`;
+        $('detailDate').textContent = fullDate(item.date);
+        $('detailTitle').textContent = item.title || '今日回响';
+        $('detailSummary').textContent = cardSummary(item);
+        $('detailOriginal').textContent = item.original;
+        $('detailMood').textContent = item.mood ? `今日心绪 · ${item.mood}` : '';
+        $('detailMood').hidden = !item.mood;
+        $('detailTomorrow').textContent = item.tomorrow ? `明日所向　${item.tomorrow}` : '';
+        $('detailTomorrow').hidden = !item.tomorrow;
+        $('detailFoot').textContent = `${item.summaryMode === 'demo' ? '总结由本地演示规则生成，不使用真实 AI。' : item.summaryMode === 'edited' ? '这段总结已经由你编辑。' : '总结来自你的手写内容。'} 卡片保存在云端，本机留有副本。`;
+        $('detailReading').hidden = false; $('cardEdit').hidden = true; $('detailActions').hidden = readerMode;
+        $('readerProgress').hidden = !readerMode; $('readerControls').hidden = !readerMode; $('readerExit').hidden = !readerMode;
+        if (readerMode) { $('readerProgress').textContent = `第 ${readerIndex + 1} / ${readerItems.length} 张 · 按日期由近及远`; $('readerPrev').disabled = readerIndex === 0; $('readerNext').disabled = readerIndex >= readerItems.length - 1; }
+      }
+      function closeDetail() {
+        backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; readerMode = false;
+        if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus({preventScroll:true});
+      }
+      function startReader() { const items = sortedReviews(); if (items.length) openDetail(items[0], {reader:true, items, index:0}); }
+      function persist(next, errorMessage = '无法保存修改，请先复制卡片内容后再试。') {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); reviews = next; return true; }
+        catch { showState(errorMessage, 'error'); return false; }
+      }
+
+      /* ---- 云端同步（Cloudflare Worker + KV）---- */
+      const getToken = () => localStorage.getItem(TOKEN_KEY) || '';
+      const setToken = (value) => { if (value) localStorage.setItem(TOKEN_KEY, value); else localStorage.removeItem(TOKEN_KEY); };
+      const apiFetch = async (path, options = {}) => {
+        const response = await fetch(path, Object.assign({}, options, { headers: Object.assign({ 'x-review-token': getToken() }, options.headers || {}) }));
+        if (response.status === 401) { const error = new Error('unauthorized'); error.status = 401; throw error; }
+        if (!response.ok) { throw new Error(`请求云端失败（${response.status}）`); }
+        return response.json();
+      };
+      function cacheLocal(next) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* 本机副本写入失败不影响云端数据 */ } }
+      function mergeReviews(local, remote) {
+        const byDate = new Map();
+        for (const item of remote) byDate.set(item.date, item);
+        for (const item of local) {
+          const existing = byDate.get(item.date);
+          if (!existing || String(existing.updatedAt || '') <= String(item.updatedAt || '')) byDate.set(item.date, item);
+        }
+        return [...byDate.values()];
+      }
+      function refreshAfterSync() {
+        updateCount();
+        renderTimeline();
+        if (!hasUnsavedChanges()) populateDate();
+      }
+      // 以云端返回为准合并本机数据；本机更新的记录会自动回传云端
+      async function applyServerReviews(remote, depth = 0) {
+        reviews = mergeReviews(reviews, remote);
+        cacheLocal(reviews);
+        refreshAfterSync();
+        if (depth >= 3) return;
+        const pending = reviews.filter((item) => !remote.some((other) => other.date === item.date && other.updatedAt === item.updatedAt));
+        if (pending.length) {
+          const data = await apiFetch('/api/reviews', { method: 'POST', body: JSON.stringify(pending) });
+          await applyServerReviews(normalizeReviews(data.reviews), depth + 1);
+        }
+      }
+      function updateSyncBadge(state) {
+        const note = $('localNote');
+        note.classList.toggle('synced', state === 'ok');
+        note.classList.toggle('syncing', state === 'pending');
+        $('localNoteText').textContent = state === 'ok' ? '已连接云端' : state === 'pending' ? '正在连接云端…' : '未连接云端 · 本机保存';
+      }
+      function showConnector(message) {
+        $('syncPanel').hidden = false;
+        $('changeToken').hidden = true;
+        $('syncStatus').textContent = message || '';
+      }
+      function hideConnector() {
+        $('syncPanel').hidden = true;
+        $('changeToken').hidden = false;
+        $('syncStatus').textContent = '';
+      }
+      async function pushRecords(records) {
+        try {
+          const data = await apiFetch('/api/reviews', { method: 'POST', body: JSON.stringify(records) });
+          await applyServerReviews(normalizeReviews(data.reviews));
+          updateSyncBadge('ok'); hideConnector();
+          showState('已保存，并同步到云端。', 'ok');
+          return true;
+        } catch (error) {
+          updateSyncBadge('local');
+          if (error.status === 401) { showConnector('访问令牌不正确，或服务端尚未配置 REVIEW_TOKEN，请重新输入。'); showState('已保存在本机，但云端未授权。', 'error'); }
+          else showState('已保存在本机，云端暂不可达；联网后会自动同步。', 'ok');
+          return false;
+        }
+      }
+      async function syncWithServer() {
+        if (!getToken()) { updateSyncBadge('local'); showConnector('首次使用请输入访问令牌（部署时设置的 REVIEW_TOKEN），连接你的云端数据。'); return false; }
+        updateSyncBadge('pending');
+        try {
+          const data = await apiFetch('/api/reviews');
+          await applyServerReviews(normalizeReviews(data.reviews));
+          updateSyncBadge('ok'); hideConnector(); return true;
+        } catch (error) {
+          updateSyncBadge('local');
+          if (error.status === 401) showConnector('访问令牌不正确，或服务端尚未配置 REVIEW_TOKEN，请重新输入。');
+          else showState('云端暂不可达，当前展示本机记录；联网后会自动同步。', 'error');
+          return false;
+        }
+      }
+      $('readerPrev').addEventListener('click', () => { if (!readerMode || readerIndex <= 0) return; readerIndex -= 1; renderDetail(readerItems[readerIndex]); detailSheet.focus(); });
+      $('readerNext').addEventListener('click', () => { if (!readerMode || readerIndex >= readerItems.length - 1) return; readerIndex += 1; renderDetail(readerItems[readerIndex]); detailSheet.focus(); });
+      $('readerExit').addEventListener('click', closeDetail); $('closeDetail').addEventListener('click', closeDetail);
+      backdrop.addEventListener('click', (event) => { if (event.target === backdrop) closeDetail(); });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && backdrop.classList.contains('open')) closeDetail(); });
+      $('editCardButton').addEventListener('click', () => {
+        if (!activeReview) return;
+        $('editCardTitle').value = activeReview.title || ''; $('editCardSummary').value = cardSummary(activeReview);
+        $('detailReading').hidden = true; $('detailActions').hidden = true; $('cardEdit').hidden = false; $('editCardTitle').focus();
+      });
+      $('editRecordButton').addEventListener('click', () => {
+        if (!activeReview) return;
+        const date = activeReview.date; if (!navigateToDate(date)) return; closeDetail(); setPage('home');
+        window.setTimeout(() => { entry.focus({preventScroll:true}); entry.scrollIntoView({behavior:'smooth', block:'center'}); }, 80);
+      });
+      $('cancelCardEdit').addEventListener('click', () => { if (activeReview) renderDetail(activeReview); });
+      $('saveCardEdit').addEventListener('click', () => {
+        if (!activeReview) return;
+        const index = reviews.findIndex((item) => item.date === activeReview.date); if (index < 0) return;
+        const previous = reviews[index]; const editedSummary = trimText($('editCardSummary').value);
+        const summary = editedSummary || demoSummary(previous.original);
+        const summaryMode = editedSummary ? (editedSummary === cardSummary(previous) ? (previous.summaryMode || 'manual') : previous.summaryMode === 'demo' ? 'edited' : 'manual') : 'demo';
+        const updated = {...previous, title:trimText($('editCardTitle').value) || '今日回响', summary, summaryMode, updatedAt:new Date().toISOString()};
+        const next = [...reviews]; next[index] = updated;
+        if (persist(next)) { updateCount(); renderTimeline(); populateDate(); updateHomeCard(updated); renderDetail(updated); pushRecords([updated]); }
+      });
+      $('searchCards').addEventListener('input', renderTimeline);
+      const dateFilter = $('dateFilter');
+      const datePicker = $('datePicker');
+      const syncDateFilter = () => {
+        const entered = trimText(dateFilter.value);
+        const dateKey = parseDateFilter(entered);
+        datePicker.value = dateKey;
+        dateFilter.dataset.dateKey = dateKey;
+        dateFilter.setAttribute('aria-invalid', String(Boolean(entered) && !dateKey));
+        dateFilter.setCustomValidity(entered && !dateKey ? '请使用“2026-10-05”或“2026年10月5日”的日期格式。' : '');
+        renderTimeline();
+      };
+      dateFilter.addEventListener('input', syncDateFilter);
+      dateFilter.addEventListener('change', () => { syncDateFilter(); if (dateFilter.getAttribute('aria-invalid') === 'true') dateFilter.reportValidity(); });
+      $('datePickerButton').addEventListener('click', () => {
+        try {
+          if (typeof datePicker.showPicker === 'function') datePicker.showPicker();
+          else { datePicker.focus(); datePicker.click(); }
+        } catch { datePicker.focus(); datePicker.click(); }
+      });
+      datePicker.addEventListener('change', () => {
+        dateFilter.value = datePicker.value ? dateOnly(datePicker.value) : '';
+        dateFilter.setCustomValidity('');
+        dateFilter.setAttribute('aria-invalid', 'false');
+        dateFilter.dataset.dateKey = datePicker.value;
+        renderTimeline();
+      });
+      $('clearFilters').addEventListener('click', () => {
+        $('searchCards').value = ''; dateFilter.value = ''; datePicker.value = '';
+        dateFilter.dataset.dateKey = ''; dateFilter.setCustomValidity(''); dateFilter.setAttribute('aria-invalid', 'false'); renderTimeline();
+      });
+      $('openHomeCard').addEventListener('click', () => { const item = reviews.find((review) => review.date === entryDate.value); if (item) openDetail(item); });
+      $('entryDate').addEventListener('change', () => navigateToDate(entryDate.value));
+      $('prevWeek').addEventListener('click', () => { weekOffset -= 7; renderWeek(); });
+      $('nextWeek').addEventListener('click', () => { weekOffset += 7; renderWeek(); });
+      moodButtons.forEach((button) => button.addEventListener('click', () => setMood(selectedMood === button.dataset.mood ? '' : button.dataset.mood)));
+      $('todayTab').addEventListener('click', () => { if (navigateToDate(localDateKey())) setPage('home'); });
+      $('browseTab').addEventListener('click', () => setPage('tunnel'));
+      $('navHome').addEventListener('click', () => { if (navigateToDate(localDateKey())) setPage('home'); });
+      $('navTunnel').addEventListener('click', () => setPage('tunnel'));
+      $('countCard').addEventListener('click', () => setPage('tunnel'));
+      $('syncConnect').addEventListener('click', async () => {
+        const value = trimText($('syncToken').value);
+        if (!value) { $('syncStatus').textContent = '请先输入访问令牌。'; $('syncToken').focus(); return; }
+        setToken(value);
+        const buttonText = $('syncConnect').querySelector('span');
+        $('syncConnect').disabled = true; buttonText.textContent = '连接中…';
+        const connected = await syncWithServer();
+        $('syncConnect').disabled = false; buttonText.textContent = '连接云端';
+        $('syncToken').value = '';
+        if (connected) $('syncToken').blur(); else $('syncToken').focus();
+      });
+      $('syncToken').addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); $('syncConnect').click(); } });
+      $('changeToken').addEventListener('click', () => { setToken(''); updateSyncBadge('local'); showConnector('请输入新的访问令牌。'); $('syncToken').focus(); });
+      window.addEventListener('online', () => { syncWithServer(); });
+      document.querySelector('.brand').addEventListener('click', (event) => { event.preventDefault(); setPage('home'); });
+      $('startFirst').addEventListener('click', () => setPage('home')); $('reviewAll').addEventListener('click', startReader);
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const original = trimText(entry.value);
+        if (!original) { showState('先写下一段复盘内容，再保存。', 'error'); $('generationState').hidden = true; entry.focus(); return; }
+        const buttonText = saveButton.querySelector('span'); saveButton.disabled = true; buttonText.textContent = '正在保存…'; showState('正在保存到当前浏览器…'); $('generationState').hidden = true;
+        const selectedDate = entryDate.value || localDateKey();
+        const existing = reviews.find((item) => item.date === selectedDate);
+        const enteredSummary = trimText(oneLine.value);
+        const summaryMode = enteredSummary ? (existing && enteredSummary === existing.summary ? (existing.summaryMode || 'manual') : 'manual') : 'demo';
+        const maxRing = reviews.reduce((max, item) => Math.max(max, Number(item.ring) || 0), reviews.length);
+        const record = {date:selectedDate, ring:existing ? ringNumber(existing) : maxRing + 1, title:trimText(cardTitle.value) || existing?.title || '今日回响', original, summary:enteredSummary || demoSummary(original), summaryMode, mood:selectedMood, tomorrow:trimText(tomorrow.value), updatedAt:new Date().toISOString()};
+        const next = reviews.filter((item) => item.date !== selectedDate).concat(record);
+        if (persist(next, '无法写入浏览器存储。你的文字仍在输入框中，请先复制后再试。')) {
+          updateCount(); renderTimeline(); updateHomeCard(record); showState('已保存到本机，正在同步云端…', 'ok');
+          $('previewCaption').scrollIntoView({behavior:'smooth', block:'nearest'});
+          pushRecords([record]);
+        }
+        saveButton.disabled = false; buttonText.textContent = '保存复盘';
+      });
+      $('todayTop').textContent = new Intl.DateTimeFormat('zh-CN', {month:'long', day:'numeric'}).format(new Date());
+      reviews = readStorage(); entryDate.value = localDateKey(); updateCount(); populateDate(); renderTimeline(); syncWithServer();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shiguang-daily-reflection",
+  "compatibility_date": "2026-06-24",
+  "main": "src/worker.js",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "REVIEW_KV",
+      // 部署前请先运行：npx wrangler kv namespace create REVIEW_KV
+      // 然后把命令输出中的 id 粘贴到下方，替换占位值
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ]
+}
