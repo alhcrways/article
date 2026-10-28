@@ -329,7 +329,5 @@ input, textarea, button { scroll-margin-bottom: 120px; }
 .local-note.synced { color: #8ba07c; }
 .local-note.synced .local-dot { background: #7fa06b; }
 
-.day-card-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 20px 0; }
-.day-card-controls label { font-size: 13px; }
-.day-card-controls select { flex: 1 1 140px; min-width: 0; width: auto; }
+.day-card-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin: 20px 0; }
 .day-card-controls button { flex-shrink: 0; }

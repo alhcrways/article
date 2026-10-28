@@ -15,8 +15,8 @@ function client(initial = []) {
   }
   const get = id => {if(!elements.has(id)) elements.set(id, element()); return elements.get(id);};
   const storage = new Map([['daily-review-cards-v1', JSON.stringify(initial)]]);
-  const context = {document:{getElementById:get, querySelectorAll:()=>[], querySelector:()=>element(), createElement:element, addEventListener(){}},
-    window:{addEventListener(){}, confirm:()=>true}, localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}, crypto:webcrypto, Intl, Date};
+  const context = {document:{body:{style:{}}, getElementById:get, querySelectorAll:()=>[], querySelector:()=>element(), createElement:element, addEventListener(){}},
+    window:{addEventListener(){}, confirm:()=>true, scrollTo(){}, setTimeout:fn=>fn()}, localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}, crypto:webcrypto, Intl, Date};
   vm.runInNewContext(script.replace('    })();', 'globalThis.testing = {normalizeReviews, mergeReviews};\n    })();'), context);
   return {get, read:()=>JSON.parse(storage.get('daily-review-cards-v1')), testing:context.testing,
     click:id=>get(id).handlers.click(), save:()=>get('reviewForm').handlers.submit({preventDefault(){}})};
@@ -32,7 +32,10 @@ test('same day: create, save twice, reload, select and edit independently', () =
   assert.equal(app.read().length, 2);
   assert.notEqual(app.read()[1].id, firstId);
   const reload = client(app.read());
-  reload.get('dayCards').value = firstId; reload.get('dayCards').handlers.change();
+  // Open the first card from the timeline and edit its original record.
+  const firstCard = reload.get('timeline').children.find(x=>x.handlers.click && x.children.some(c=>c.textContent?.includes('第一件事情')));
+  assert.ok(firstCard);
+  firstCard.handlers.click(); reload.click('editRecordButton');
   assert.equal(reload.get('entry').value, '第一件事情');
   reload.get('entry').value = '修改第一件事情'; reload.save();
   assert.equal(reload.read().length, 2);

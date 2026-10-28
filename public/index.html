@@ -49,7 +49,7 @@
                   <h2 id="selectedDateHeading"></h2>
                   <p class="paper-weekday" id="selectedWeekday"></p>
                 </div>
-                <div class="day-card-controls"><label for="dayCards">当天卡片</label><select id="dayCards" class="field-input" aria-label="选择当天卡片"></select><button id="newReview" class="secondary" type="button">＋ 再记一张</button></div>
+                <div class="day-card-controls"><button id="newReview" class="secondary" type="button">＋ 再记一张</button></div>
                 <input id="entryDate" name="date" type="date" aria-label="复盘日期" class="visually-hidden-date">
 
                 <fieldset class="mood-field">
@@ -368,18 +368,6 @@
         const dayItems = sortedReviews().filter((item) => item.date === selected);
         const existing = options.newCard ? null : (dayItems.find((item) => item.id === editingId) || (editingId === null ? dayItems[0] : null));
         editingId = existing?.id || '';
-        const selector = $('dayCards');
-        selector.replaceChildren();
-        for (const item of dayItems) {
-          const option = document.createElement('option');
-          option.value = item.id; option.textContent = item.title || '今日回响';
-          selector.append(option);
-        }
-        if (!existing) {
-          const option = document.createElement('option');
-          option.value = ''; option.textContent = '新卡片（尚未保存）'; selector.append(option);
-        }
-        selector.value = editingId;
         saveButton.querySelector('span').textContent = existing ? '保存修改' : '保存复盘';
         $('selectedDateHeading').textContent = dateOnly(selected);
         $('selectedWeekday').textContent = weekday(selected);
@@ -578,11 +566,6 @@
       $('newReview').addEventListener('click', () => {
         if (hasUnsavedChanges() && !window.confirm('当前修改尚未保存。放弃修改并新建卡片吗？')) return;
         populateDate({newCard:true}); entry.focus();
-      });
-      $('dayCards').addEventListener('change', () => {
-        const id = $('dayCards').value;
-        if (hasUnsavedChanges() && !window.confirm('当前修改尚未保存。放弃修改并切换卡片吗？')) { $('dayCards').value = editingId; return; }
-        editingId = id; populateDate();
       });
       $('entryDate').addEventListener('change', () => navigateToDate(entryDate.value));
       $('prevWeek').addEventListener('click', () => { weekOffset -= 7; renderWeek(); });
