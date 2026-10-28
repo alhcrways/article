@@ -30,6 +30,7 @@ function sanitizeRecord(input) {
   const original = clampText(input.original, 12000);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !original.trim()) return null;
   return {
+    id: recordId(input),
     date,
     ring: Number.isInteger(input.ring) && input.ring > 0 ? input.ring : 0,
     title: clampText(input.title, 60) || '今日回响',
@@ -42,19 +43,21 @@ function sanitizeRecord(input) {
   };
 }
 
+const recordId = (item) => typeof item.id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(item.id) ? item.id : `legacy-${item.date}`;
+
 async function readReviews(env) {
   const value = await env.REVIEW_KV.get(KV_KEY, 'json');
-  return Array.isArray(value) ? value.filter((item) => item && typeof item.date === 'string' && typeof item.original === 'string') : [];
+  return Array.isArray(value) ? value.filter((item) => item && typeof item.date === 'string' && typeof item.original === 'string').map((item) => ({...item, id: recordId(item)})) : [];
 }
 
-// 按日期 upsert，同一日期保留 updatedAt 较新的版本（最后写入优先）
+// 按卡片 ID upsert，同一卡片保留 updatedAt 较新的版本（最后写入优先）
 async function upsertReviews(env, incoming) {
   const list = await readReviews(env);
   let changed = false;
   for (const raw of incoming) {
     const record = sanitizeRecord(raw);
     if (!record) continue;
-    const index = list.findIndex((item) => item.date === record.date);
+    const index = list.findIndex((item) => item.id === record.id);
     if (index === -1) { list.push(record); changed = true; }
     else if (String(list[index].updatedAt || '') <= String(record.updatedAt)) { list[index] = record; changed = true; }
   }
@@ -88,3 +91,4 @@ export default {
     return jsonReply(405, { error: 'method not allowed' });
   }
 };
+

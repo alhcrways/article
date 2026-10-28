@@ -49,6 +49,7 @@
                   <h2 id="selectedDateHeading"></h2>
                   <p class="paper-weekday" id="selectedWeekday"></p>
                 </div>
+                <div class="day-card-controls"><label for="dayCards">当天卡片</label><select id="dayCards" class="field-input" aria-label="选择当天卡片"></select><button id="newReview" class="secondary" type="button">＋ 再记一张</button></div>
                 <input id="entryDate" name="date" type="date" aria-label="复盘日期" class="visually-hidden-date">
 
                 <fieldset class="mood-field">
@@ -190,6 +191,7 @@
       let reviews = [];
       let selectedMood = '';
       let loadedDateKey = '';
+      let editingId = null;
       let weekOffset = 0;
       let readerMode = false;
       let readerItems = [];
@@ -229,13 +231,13 @@
         const moment = clean.length > 72 ? `${clean.slice(0, 72)}…` : clean;
         return `今天值得记住的，是「${moment}」这段经历。\n\n愿你记得，认真走过的每一步都算数，也把这份体会轻轻带到明天。`;
       };
-      const sortedReviews = () => [...reviews].sort((a,b) => b.date.localeCompare(a.date));
+      const sortedReviews = () => [...reviews].sort((a,b) => b.date.localeCompare(a.date) || String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')) || a.id.localeCompare(b.id));
       const parseJson = (text) => { try { return JSON.parse(text || '[]'); } catch { return []; } };
-      const normalizeReviews = (value) => Array.isArray(value) ? value.filter((item) => item && /^\d{4}-\d\d-\d\d$/.test(item.date) && typeof item.original === 'string') : [];
+      const normalizeReviews = (value) => Array.isArray(value) ? value.filter((item) => item && /^\d{4}-\d\d-\d\d$/.test(item.date) && typeof item.original === 'string').map((item) => ({...item, id: typeof item.id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(item.id) ? item.id : `legacy-${item.date}`})) : [];
       function readStorage() { return normalizeReviews(parseJson(localStorage.getItem(STORAGE_KEY))); }
       function ringNumber(item) {
         if (Number.isInteger(item.ring) && item.ring > 0) return item.ring;
-        return [...reviews].sort((a,b) => a.date.localeCompare(b.date)).findIndex((review) => review.date === item.date) + 1;
+        return [...reviews].sort((a,b) => a.date.localeCompare(b.date)).findIndex((review) => review.id === item.id) + 1;
       }
       function setMood(value) {
         selectedMood = value || '';
@@ -247,7 +249,7 @@
       }
       function hasUnsavedChanges() {
         if (!loadedDateKey) return false;
-        const existing = reviews.find((item) => item.date === loadedDateKey);
+        const existing = reviews.find((item) => item.id === editingId);
         const defaultTitle = existing?.title || '今日回响';
         const expected = {title:defaultTitle, original:existing?.original || '', summary:existing?.summaryMode === 'demo' ? '' : (existing?.summary || ''), mood:existing?.mood || '', tomorrow:existing?.tomorrow || ''};
         const current = {title:trimText(cardTitle.value) || defaultTitle, original:entry.value, summary:oneLine.value, mood:selectedMood, tomorrow:tomorrow.value};
@@ -263,6 +265,7 @@
         }
         weekOffset = 0;
         entryDate.value = selected;
+        editingId = null;
         populateDate();
         return true;
       }
@@ -360,9 +363,24 @@
         $('generationState').textContent = demo ? '纪念卡已生成 · 本地演示规则（非 AI）' : '纪念卡已生成 · 总结来自你的文字';
         $('generationState').hidden = false;
       }
-      function populateDate() {
+      function populateDate(options = {}) {
         const selected = entryDate.value || localDateKey();
-        const existing = reviews.find((item) => item.date === selected);
+        const dayItems = sortedReviews().filter((item) => item.date === selected);
+        const existing = options.newCard ? null : (dayItems.find((item) => item.id === editingId) || (editingId === null ? dayItems[0] : null));
+        editingId = existing?.id || '';
+        const selector = $('dayCards');
+        selector.replaceChildren();
+        for (const item of dayItems) {
+          const option = document.createElement('option');
+          option.value = item.id; option.textContent = item.title || '今日回响';
+          selector.append(option);
+        }
+        if (!existing) {
+          const option = document.createElement('option');
+          option.value = ''; option.textContent = '新卡片（尚未保存）'; selector.append(option);
+        }
+        selector.value = editingId;
+        saveButton.querySelector('span').textContent = existing ? '保存修改' : '保存复盘';
         $('selectedDateHeading').textContent = dateOnly(selected);
         $('selectedWeekday').textContent = weekday(selected);
         entry.value = existing?.original || '';
@@ -372,7 +390,7 @@
         setMood(existing?.mood || '');
         loadedDateKey = selected;
         if (existing) showState(`${selected === localDateKey() ? '今天' : fullDate(selected)}已有记录 · 保存将更新这一环`, 'ok');
-        else showState('这一天还没有记录，写下便保存。');
+        else showState(dayItems.length ? `当天已有 ${dayItems.length} 张卡片，现在记录新的一张。` : '这一天还没有记录，写下便保存。');
         updateHomeCard(existing);
         renderWeek();
       }
@@ -429,13 +447,13 @@
       };
       function cacheLocal(next) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* 本机副本写入失败不影响云端数据 */ } }
       function mergeReviews(local, remote) {
-        const byDate = new Map();
-        for (const item of remote) byDate.set(item.date, item);
+        const byId = new Map();
+        for (const item of remote) byId.set(item.id, item);
         for (const item of local) {
-          const existing = byDate.get(item.date);
-          if (!existing || String(existing.updatedAt || '') <= String(item.updatedAt || '')) byDate.set(item.date, item);
+          const existing = byId.get(item.id);
+          if (!existing || String(existing.updatedAt || '') <= String(item.updatedAt || '')) byId.set(item.id, item);
         }
-        return [...byDate.values()];
+        return [...byId.values()];
       }
       function refreshAfterSync() {
         updateCount();
@@ -448,7 +466,7 @@
         cacheLocal(reviews);
         refreshAfterSync();
         if (depth >= 3) return;
-        const pending = reviews.filter((item) => !remote.some((other) => other.date === item.date && other.updatedAt === item.updatedAt));
+        const pending = reviews.filter((item) => !remote.some((other) => other.id === item.id && other.updatedAt === item.updatedAt));
         if (pending.length) {
           const data = await apiFetch('/api/reviews', { method: 'POST', body: JSON.stringify(pending) });
           await applyServerReviews(normalizeReviews(data.reviews), depth + 1);
@@ -510,13 +528,14 @@
       });
       $('editRecordButton').addEventListener('click', () => {
         if (!activeReview) return;
-        const date = activeReview.date; if (!navigateToDate(date)) return; closeDetail(); setPage('home');
+        if (hasUnsavedChanges() && !window.confirm('当前修改尚未保存。放弃修改并编辑这张卡片吗？')) return;
+        entryDate.value = activeReview.date; editingId = activeReview.id; populateDate(); closeDetail(); setPage('home');
         window.setTimeout(() => { entry.focus({preventScroll:true}); entry.scrollIntoView({behavior:'smooth', block:'center'}); }, 80);
       });
       $('cancelCardEdit').addEventListener('click', () => { if (activeReview) renderDetail(activeReview); });
       $('saveCardEdit').addEventListener('click', () => {
         if (!activeReview) return;
-        const index = reviews.findIndex((item) => item.date === activeReview.date); if (index < 0) return;
+        const index = reviews.findIndex((item) => item.id === activeReview.id); if (index < 0) return;
         const previous = reviews[index]; const editedSummary = trimText($('editCardSummary').value);
         const summary = editedSummary || demoSummary(previous.original);
         const summaryMode = editedSummary ? (editedSummary === cardSummary(previous) ? (previous.summaryMode || 'manual') : previous.summaryMode === 'demo' ? 'edited' : 'manual') : 'demo';
@@ -555,7 +574,16 @@
         $('searchCards').value = ''; dateFilter.value = ''; datePicker.value = '';
         dateFilter.dataset.dateKey = ''; dateFilter.setCustomValidity(''); dateFilter.setAttribute('aria-invalid', 'false'); renderTimeline();
       });
-      $('openHomeCard').addEventListener('click', () => { const item = reviews.find((review) => review.date === entryDate.value); if (item) openDetail(item); });
+      $('openHomeCard').addEventListener('click', () => { const item = reviews.find((review) => review.id === editingId); if (item) openDetail(item); });
+      $('newReview').addEventListener('click', () => {
+        if (hasUnsavedChanges() && !window.confirm('当前修改尚未保存。放弃修改并新建卡片吗？')) return;
+        populateDate({newCard:true}); entry.focus();
+      });
+      $('dayCards').addEventListener('change', () => {
+        const id = $('dayCards').value;
+        if (hasUnsavedChanges() && !window.confirm('当前修改尚未保存。放弃修改并切换卡片吗？')) { $('dayCards').value = editingId; return; }
+        editingId = id; populateDate();
+      });
       $('entryDate').addEventListener('change', () => navigateToDate(entryDate.value));
       $('prevWeek').addEventListener('click', () => { weekOffset -= 7; renderWeek(); });
       $('nextWeek').addEventListener('click', () => { weekOffset += 7; renderWeek(); });
@@ -587,18 +615,18 @@
         if (!original) { showState('先写下一段复盘内容，再保存。', 'error'); $('generationState').hidden = true; entry.focus(); return; }
         const buttonText = saveButton.querySelector('span'); saveButton.disabled = true; buttonText.textContent = '正在保存…'; showState('正在保存到当前浏览器…'); $('generationState').hidden = true;
         const selectedDate = entryDate.value || localDateKey();
-        const existing = reviews.find((item) => item.date === selectedDate);
+        const existing = reviews.find((item) => item.id === editingId);
         const enteredSummary = trimText(oneLine.value);
         const summaryMode = enteredSummary ? (existing && enteredSummary === existing.summary ? (existing.summaryMode || 'manual') : 'manual') : 'demo';
         const maxRing = reviews.reduce((max, item) => Math.max(max, Number(item.ring) || 0), reviews.length);
-        const record = {date:selectedDate, ring:existing ? ringNumber(existing) : maxRing + 1, title:trimText(cardTitle.value) || existing?.title || '今日回响', original, summary:enteredSummary || demoSummary(original), summaryMode, mood:selectedMood, tomorrow:trimText(tomorrow.value), updatedAt:new Date().toISOString()};
-        const next = reviews.filter((item) => item.date !== selectedDate).concat(record);
+        const record = {id:existing?.id || crypto.randomUUID(), date:selectedDate, ring:existing ? ringNumber(existing) : maxRing + 1, title:trimText(cardTitle.value) || existing?.title || '今日回响', original, summary:enteredSummary || demoSummary(original), summaryMode, mood:selectedMood, tomorrow:trimText(tomorrow.value), updatedAt:new Date().toISOString()};
+        const next = reviews.filter((item) => item.id !== record.id).concat(record);
         if (persist(next, '无法写入浏览器存储。你的文字仍在输入框中，请先复制后再试。')) {
-          updateCount(); renderTimeline(); updateHomeCard(record); showState('已保存到本机，正在同步云端…', 'ok');
+          editingId = record.id; populateDate(); updateCount(); renderTimeline(); updateHomeCard(record); showState('已保存到本机，正在同步云端…', 'ok');
           $('previewCaption').scrollIntoView({behavior:'smooth', block:'nearest'});
           pushRecords([record]);
         }
-        saveButton.disabled = false; buttonText.textContent = '保存复盘';
+        saveButton.disabled = false; buttonText.textContent = editingId ? '保存修改' : '保存复盘';
       });
       $('todayTop').textContent = new Intl.DateTimeFormat('zh-CN', {month:'long', day:'numeric'}).format(new Date());
       reviews = readStorage(); entryDate.value = localDateKey(); updateCount(); populateDate(); renderTimeline(); syncWithServer();
@@ -606,3 +634,4 @@
   </script>
 </body>
 </html>
+
